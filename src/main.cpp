@@ -92,39 +92,56 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
-          /*
-          * TODO: Calculate steeering angle and throttle using MPC.
-          *
-          * Both are in between [-1, 1].
-          *
-          */
-          double steer_value;
-          double throttle_value;
+          vector<double> next_x;
+          vector<double> next_y;
+
+          // Map to vehicle coordinates.
+          vector<double> vehicle_space_x(ptsx.size());
+          vector<double> vehicle_space_y(ptsy.size());
+
+          for (int i = 0; i < ptsx.size(); i++) {
+            double map_x = ptsx[i] - px;
+            double map_y = ptsy[i] - py;
+            double cos_psi = cos(psi);
+            double sin_psi = sin(psi);
+
+            vehicle_space_x[i] = map_x * cos_psi + map_y * sin_psi;
+            vehicle_space_y[i] = -map_x * sin_psi + map_y * cos_psi;
+
+            next_x.push_back(vehicle_space_x[i]);
+            next_y.push_back(vehicle_space_y[i]);
+          }
+
+          Eigen::Map<Eigen::VectorXd> ptsxE(&vehicle_space_x[0], vehicle_space_x.size());
+          Eigen::Map<Eigen::VectorXd> ptsyE(&vehicle_space_y[0], vehicle_space_y.size());
+
+          auto coeffs = polyfit(
+            Eigen::Map<Eigen::VectorXd>(&vehicle_space_x[0], vehicle_space_x.size()), 
+            Eigen::Map<Eigen::VectorXd>(&vehicle_space_y[0], vehicle_space_y.size()), 
+            3
+          );
+          
+          double cte = polyeval(coeffs, 0);
+          double epsi = atan(coeffs[1]);
+
+          Eigen::VectorXd state_vector(6);
+          state_vector << 0.0, 0.0, 0.0, v, cte, epsi;
+
+          auto vars = mpc.Solve(state_vector, coeffs);
+          double steer_value = vars[0];
+          double throttle_value = vars[1];
 
           json msgJson;
-          msgJson["steering_angle"] = steer_value;
+          msgJson["steering_angle"] = -steer_value;
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
-          vector<double> mpc_x_vals;
-          vector<double> mpc_y_vals;
+          // Projected trajectory
+          msgJson["mpc_x"] = mpc.mpc_x;
+          msgJson["mpc_y"] = mpc.mpc_y;
 
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Green line
-
-          msgJson["mpc_x"] = mpc_x_vals;
-          msgJson["mpc_y"] = mpc_y_vals;
-
-          //Display the waypoints/reference line
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
-
-          //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
-          // the points in the simulator are connected by a Yellow line
-
-          msgJson["next_x"] = next_x_vals;
-          msgJson["next_y"] = next_y_vals;
-
+          // Waypoints
+          msgJson["next_x"] = next_x;
+          msgJson["next_y"] = next_y;
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
