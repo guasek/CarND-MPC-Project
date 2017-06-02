@@ -39,7 +39,8 @@ I changed the coordinates received from the simulator from map space to vehicle'
 
 # Model Predictive Control with Latency
 
-I've chosen appropriate actuation frequency in order to mitigate the lag.
+I've chosen appropriate actuation frequency in order to mitigate the lag. I could also try to use some sort of averaging over the next few steps in order to further improve the actuations.
+
 ---
 
 ## Dependencies
