@@ -112,9 +112,6 @@ int main() {
             next_y.push_back(vehicle_space_y[i]);
           }
 
-          Eigen::Map<Eigen::VectorXd> ptsxE(&vehicle_space_x[0], vehicle_space_x.size());
-          Eigen::Map<Eigen::VectorXd> ptsyE(&vehicle_space_y[0], vehicle_space_y.size());
-
           auto coeffs = polyfit(
             Eigen::Map<Eigen::VectorXd>(&vehicle_space_x[0], vehicle_space_x.size()), 
             Eigen::Map<Eigen::VectorXd>(&vehicle_space_y[0], vehicle_space_y.size()), 
