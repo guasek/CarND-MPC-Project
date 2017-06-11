@@ -91,6 +91,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double previous_steer = j[1]["steering_angle"];
+          double previous_throttle = j[1]["throttle"];
 
           vector<double> next_x;
           vector<double> next_y;
@@ -119,12 +121,21 @@ int main() {
           );
           
           double cte = polyeval(coeffs, 0);
-          double epsi = atan(coeffs[1]);
+          double epsi = -atan(coeffs[1]);
 
-          Eigen::VectorXd state_vector(6);
-          state_vector << 0.0, 0.0, 0.0, v, cte, epsi;
+          // Predict vehicle state 100ms into the future to compensate for 
+          // Steering lag.
+          Eigen::VectorXd lagged_state_vector(6);
+          lagged_state_vector <<
+              v * 0.1,
+              0,
+              -v * previous_steer * 0.1 / 2.67,
+              v,
+              cte,
+              epsi 
+          ;
 
-          auto vars = mpc.Solve(state_vector, coeffs);
+          auto vars = mpc.Solve(lagged_state_vector, coeffs);
           double steer_value = vars[0];
           double throttle_value = vars[1];
 

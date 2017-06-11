@@ -39,7 +39,7 @@ I changed the coordinates received from the simulator from map space to vehicle'
 
 # Model Predictive Control with Latency
 
-I've chosen appropriate actuation frequency in order to mitigate the lag. I could also try to use some sort of averaging over the next few steps in order to further improve the actuations.
+I've predicted initial vehicle state 100ms into the future before I pass the vector to solver in order to compensate for steering lag. I could also try to use some sort of averaging over the next few steps in order to further improve the actuations.
 
 ---
 
